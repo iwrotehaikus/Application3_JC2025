@@ -1,9 +1,11 @@
 /* --------------------------------------------------------------
    Application: 03 - Rev1
-   Class: Real Time Systems - Fa 2025
-   Author: [John Crawford] 
-   Email: [evancrawford@ucf.edu]
+   Release Type: Baseline Example of ISR, Semaphores and Mutex for Data
+   Class: Real Time Systems - Su 2025
+   Author: [M Borowczak] 
+   Email: [mike.borowczak@ucf.edu]
    Company: [University of Central Florida]
+   Website: theDRACOlab.com
    AI Use: Commented inline -- None
 ---------------------------------------------------------------*/
 #include <stdio.h>
@@ -13,6 +15,9 @@
 #include "freertos/semphr.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "driver/adc.h"
+
+
 
 // BONUS Adding in some examples of using the built in ESP Logging capabilties!
 const static char *TAG = "SAT-03>";
@@ -39,14 +44,13 @@ static SemaphoreHandle_t xButtonSem;  // Hand off on button press!
 
 // === ISR: Triggered on button press ===
 void IRAM_ATTR button_isr_handler(void *arg) {
-    ESP_LOGV(TAG,"button pressed - setting semaphore to be taken by logger \n");
+    ESP_LOGV(TAG,"button pressed - setting semaphore to be t aken by logger \n");
     BaseType_t xHigherPrioTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR(xButtonSem, &xHigherPrioTaskWoken);
     portYIELD_FROM_ISR(xHigherPrioTaskWoken);
 }
 // Task: LED Blink Task (Sattelite Status)
 void led_blink_task(void *arg) {
-    
     while (1) {
         gpio_set_level(LED_PIN, 1);
         vTaskDelay(2500);
@@ -66,15 +70,21 @@ void console_task(void *arg) {
 // Task: Read sensor and store in buffer 
 void sensor_task(void *arg) {
     ESP_LOGV(TAG,"sensor entered \n");
+    TickType_t lastWakeTime = xTaskGetTickCount();
+    const TickType_t period = pdMS_TO_TICKS(200); // 200 ms
+
+    
     while (1) {
-   
-        // Simulate reading light sensor value; See application 2 to do that
-        uint16_t val = xTaskGetTickCount() % 4096; 
+        adc1_config_width(ADC_WIDTH_BIT_12); // 12-bit resolution
+        adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11); // full scale 0-3.3V
+
+        // Read ADC value (0-4095 for 12-bit)
+        uint16_t sensorVal = adc1_get_raw(ADC1_CHANNEL_0);
 
         // Lock mutex to write value to buffer  || What happens if you lock it for too short or long of a time? :)
         if (xSemaphoreTake(xLogMutex, pdMS_TO_TICKS(10))) {
            ESP_LOGV(TAG,"sensor taking log data semaphore for write\n");
-            sensor_log[log_index] = val;
+            sensor_log[log_index] = sensorVal;
             // this circular buffer will have issues at startup and when cleared; no clearing logic here
             log_index = (log_index + 1) % LOG_BUFFER_SIZE; 
             xSemaphoreGive(xLogMutex);  //give up the semaphore!
@@ -150,4 +160,3 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "System ready. Press the button to dump the log.");
 }
-
