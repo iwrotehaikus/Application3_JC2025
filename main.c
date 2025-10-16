@@ -1,11 +1,9 @@
 /* --------------------------------------------------------------
    Application: 03 - Rev1
-   Release Type: Baseline Example of ISR, Semaphores and Mutex for Data
-   Class: Real Time Systems - Su 2025
-   Author: [M Borowczak] 
-   Email: [mike.borowczak@ucf.edu]
+   Class: Real Time Systems - Fa 2025
+   Author: [John Crawford] 
+   Email: [evancrawford@ucf.edu]
    Company: [University of Central Florida]
-   Website: theDRACOlab.com
    AI Use: Commented inline -- None
 ---------------------------------------------------------------*/
 #include <stdio.h>
@@ -152,3 +150,4 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "System ready. Press the button to dump the log.");
 }
+
