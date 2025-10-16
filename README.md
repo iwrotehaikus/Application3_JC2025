@@ -1,4 +1,11 @@
 # Application3_JC2025
+Real Time Systems Application 3
+
+John Crawford
+
+5286620
+
+Context: Space Station / Satellite Beacon
 
 # Analysis Questions – RTOS Application 3
 
